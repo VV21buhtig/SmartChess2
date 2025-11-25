@@ -11,18 +11,21 @@ namespace SmartChess.ViewModels
     public class HistoryViewModel : INotifyPropertyChanged
     {
         private readonly DatabaseService _databaseService;
+        private User? _currentUser;
         private ObservableCollection<Game> _games = new ObservableCollection<Game>();
 
-        //public HistoryViewModel()
-        //{
-        //    _databaseService = new DatabaseService(new Data.AppDbContext(), new Data.Repository.UserRepository(new Data.AppDbContext()), new Data.Repository.GameRepository(new Data.AppDbContext()), new Data.Repository.MoveRepository(new Data.AppDbContext()));
-        //}
         public HistoryViewModel(DatabaseService databaseService)
         {
             _databaseService = databaseService;
             LoadGamesCommand = new RelayCommand(async () => await LoadGamesAsync()); // ← исправлено
         }
 
+        public void SetCurrentUser(User? user)
+        {
+            _currentUser = user;
+            // Automatically load games when user is set
+            _ = Task.Run(async () => await LoadGamesAsync());
+        }
 
         //public ObservableCollection<Game> Games
         //{
@@ -47,9 +50,12 @@ namespace SmartChess.ViewModels
 
         private async Task LoadGamesAsync() // ← ДОБАВЬ private
         {
-            // Загружаем игры текущего пользователя (нужно передать userId)
-            var games = await _databaseService.GetGamesByUserIdAsync(1); // Пока заглушка
-            Games = new ObservableCollection<Game>(games);
+            // Загружаем игры текущего пользователя
+            if (_currentUser != null)
+            {
+                var games = await _databaseService.GetGamesByUserIdAsync(_currentUser.Id);
+                Games = new ObservableCollection<Game>(games);
+            }
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

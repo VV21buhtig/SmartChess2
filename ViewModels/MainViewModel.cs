@@ -29,6 +29,10 @@ namespace SmartChess.ViewModels
             // Подписываемся на события из AuthViewModel
             AuthViewModel.LoginSuccess += OnAuthLoginSuccess;
             AuthViewModel.RegistrationSuccess += OnAuthRegistrationSuccess;
+            
+            // Подписываемся на события навигации из GameViewModel
+            GameViewModel.NavigateToHistoryRequested += () => CurrentView = HistoryViewModel;
+            GameViewModel.NavigateToProfileRequested += () => CurrentView = ProfileViewModel;
 
             // Начинаем с экрана авторизации
             CurrentView = AuthViewModel;
@@ -68,6 +72,15 @@ namespace SmartChess.ViewModels
         private void OnAuthLoginSuccess(User user)
         {
             CurrentUser = user;
+            HistoryViewModel.SetCurrentUser(user); // Устанавливаем текущего пользователя для HistoryViewModel
+            
+            // Start a new game for the logged-in user
+            var gameSessionService = (Application.Current as App)?._host?.Services.GetService<GameSessionService>();
+            if (gameSessionService != null)
+            {
+                _ = Task.Run(async () => await gameSessionService.StartNewGameAsync(user));
+            }
+            
             CurrentView = GameViewModel; // Переход к экрану игры
         }
 
