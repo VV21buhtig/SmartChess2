@@ -94,8 +94,8 @@ namespace SmartChess.Services
 
         private string GetPieceTypeAtPosition(Position position)
         {
-            var piece = CurrentBoard[position.Row, position.Col];
-            if (piece == null || piece.Type == Models.Chess.Enums.PieceType.Empty)
+            var piece = CurrentBoard[position];
+            if (piece == null)
                 return "Empty";
 
             return piece.Type.ToString();
@@ -103,14 +103,14 @@ namespace SmartChess.Services
 
         private bool IsCaptureMove(Position from, Position to)
         {
-            var targetPiece = CurrentBoard[to.Row, to.Col];
-            return targetPiece != null && targetPiece.Type != Models.Chess.Enums.PieceType.Empty;
+            var targetPiece = CurrentBoard[to];
+            return targetPiece != null;
         }
 
         private string? GetCapturedPieceType(Position from, Position to)
         {
-            var targetPiece = CurrentBoard[to.Row, to.Col];
-            if (targetPiece != null && targetPiece.Type != Models.Chess.Enums.PieceType.Empty)
+            var targetPiece = CurrentBoard[to];
+            if (targetPiece != null)
                 return targetPiece.Type.ToString();
             
             return null;

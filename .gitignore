@@ -1,3 +1,52 @@
-```csharp
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.dll
+*.so
+*.exe
+*.class
+*.out
 
-```
+# Dependencies
+node_modules/
+venv/
+.venv/
+.env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Editors
+.vscode/
+.idea/
+
+# Build directories
+dist/
+build/
+target/
+*.tar*
+*.zip
+*.gz
+*.rar
+*.7z
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Testing
+.coverage
+coverage/
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Original rules preserved
+*.log
