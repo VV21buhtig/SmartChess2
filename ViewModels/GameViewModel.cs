@@ -12,7 +12,6 @@ namespace SmartChess.ViewModels
 {
     public class GameViewModel : INotifyPropertyChanged
     {
-        private readonly MainViewModel _mainViewModel;
         private readonly GameSessionService _gameSessionService; // Используем GameSessionService
         private Board _currentBoard = new Board();
         private Models.Chess.Enums.Color _currentPlayer = Models.Chess.Enums.Color.White;
@@ -24,15 +23,22 @@ namespace SmartChess.ViewModels
         public RelayCommand<Position> MovePieceCommand { get; }
         public RelayCommand NavigateToHistoryCommand { get; }
         public RelayCommand NavigateToProfileCommand { get; }
+        
+        public event Action? NavigateToHistoryRequested;
+        public event Action? NavigateToProfileRequested;
+        
         // Изменён конструктор: принимает GameSessionService через DI
         public GameViewModel(GameSessionService gameSessionService)
         {
             _gameSessionService = gameSessionService;
             SelectPieceCommand = new RelayCommand<Position>(SelectPiece);
             MovePieceCommand = new RelayCommand<Position>(async (position) => await MovePiece(position));
-            NavigateToHistoryCommand = new RelayCommand(() => _mainViewModel.NavigateToHistoryCommand.Execute(null));
-            NavigateToProfileCommand = new RelayCommand(() => _mainViewModel.NavigateToProfileCommand.Execute(null));
-            _gameSessionService.InitializeGame();
+            NavigateToHistoryCommand = new RelayCommand(() => NavigateToHistoryRequested?.Invoke());
+            NavigateToProfileCommand = new RelayCommand(() => NavigateToProfileRequested?.Invoke());
+            
+            // Инициализируем доску без создания игры в БД (т.к. _currentUser == null в начале)
+            _ = Task.Run(async () => await _gameSessionService.InitializeGame());
+            
             _currentBoard = _gameSessionService.CurrentBoard;
             InitializeBoard();
         }
@@ -212,17 +218,11 @@ namespace SmartChess.ViewModels
         }
         public async void StartNewGameCommand()
         {
-            // Предположим, _mainViewModel доступен через DI или передаётся в конструктор
-            // await _gameSessionService.StartNewGameAsync(_mainViewModel.CurrentUser);
-            // Или если пользователь передаётся напрямую
-            // await _gameSessionService.StartNewGameAsync(someUser);
-
-            // Для демонстрации, просто инициализируем игру через GameSessionService
-            // _gameSessionService.InitializeGame(); // Вызов метода из GameSessionService
-            // CurrentBoard = _gameSessionService.CurrentBoard;
-            // CurrentPlayer = _gameSessionService.CurrentPlayer;
-            // GameState = _gameSessionService.GameState;
-             StatusMessage = "Игра началась! Ход белых.";
+            // Since GameViewModel doesn't have direct access to the current user,
+            // we'll just initialize the game without creating a record in DB
+            // The game for the logged-in user is already started when they log in
+            await _gameSessionService.InitializeGame();
+            StatusMessage = "Игра началась! Ход белых.";
         }
 
         public async Task MakeMoveCommand(Position from, Position to)

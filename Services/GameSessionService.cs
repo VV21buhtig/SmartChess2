@@ -45,12 +45,11 @@ namespace SmartChess.Services
 
         public async Task<bool> MakeMoveAsync(Position from, Position to)
         {
-            //System.Diagnostics.Trace.WriteLine($"=== GAME SESSION MAKE MOVE: {from} -> {to} ===");
-            //if (_currentGame == null)
-            //{
-            //    System.Diagnostics.Trace.WriteLine("=== ERROR: No current game ===");
-            //    return false; // Игра не начата
-            //}
+            if (_currentGame == null)
+            {
+                System.Diagnostics.Trace.WriteLine("=== ERROR: No current game ===");
+                return false; // Игра не начата
+            }
 
             // Вызов метода из ChessEngine
             bool moveSuccess = await _chessEngine.MakeMoveAsync(from, to);
@@ -63,8 +62,22 @@ namespace SmartChess.Services
                 CurrentPlayer = _chessEngine.CurrentPlayer;
                 GameState = _chessEngine.GameState;
                 System.Diagnostics.Trace.WriteLine("=== MOVE SUCCESS IN SESSION ===");
+                
                 // Запись хода в БД
-                // ... (логика создания и сохранения Move в БД)
+                var move = new Move 
+                { 
+                    GameId = _currentGame.Id, 
+                    FromPosition = from.ToString(), 
+                    ToPosition = to.ToString(),
+                    MoveNumber = _currentGame.MoveCount + 1,
+                    PieceType = GetPieceTypeAtPosition(from), // Получаем тип фигуры
+                    Color = CurrentPlayer == Models.Chess.Enums.Color.White ? "White" : "Black",
+                    IsCapture = IsCaptureMove(from, to),
+                    CapturedPiece = GetCapturedPieceType(from, to)
+                };
+                
+                await _databaseService.CreateMoveAsync(move);
+                _currentGame.MoveCount++; // Увеличиваем счетчик ходов
             }
             else
             {
@@ -77,6 +90,30 @@ namespace SmartChess.Services
         public async Task<Models.Chess.Enums.GameState> GetGameStateAsync()
         {
             return await _chessEngine.GetGameStateAsync();
+        }
+
+        private string GetPieceTypeAtPosition(Position position)
+        {
+            var piece = CurrentBoard[position.Row, position.Col];
+            if (piece == null || piece.Type == Models.Chess.Enums.PieceType.Empty)
+                return "Empty";
+
+            return piece.Type.ToString();
+        }
+
+        private bool IsCaptureMove(Position from, Position to)
+        {
+            var targetPiece = CurrentBoard[to.Row, to.Col];
+            return targetPiece != null && targetPiece.Type != Models.Chess.Enums.PieceType.Empty;
+        }
+
+        private string? GetCapturedPieceType(Position from, Position to)
+        {
+            var targetPiece = CurrentBoard[to.Row, to.Col];
+            if (targetPiece != null && targetPiece.Type != Models.Chess.Enums.PieceType.Empty)
+                return targetPiece.Type.ToString();
+            
+            return null;
         }
     }
 }
