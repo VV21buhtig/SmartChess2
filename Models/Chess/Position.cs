@@ -4,6 +4,8 @@
     {
         public int X { get; }
         public int Y { get; }
+        public int Row => Y;
+        public int Col => X;
 
         public Position(int x, int y)
         {
