@@ -11,14 +11,16 @@ namespace SmartChess.ViewModels
     {
         private object _currentView;
         private User? _currentUser;
+        private GameSessionService _gameSessionService;
 
         // Изменён конструктор - принимает все VM
-        public MainViewModel(AuthViewModel authViewModel, GameViewModel gameViewModel, HistoryViewModel historyViewModel, ProfileViewModel profileViewModel)
+        public MainViewModel(AuthViewModel authViewModel, GameViewModel gameViewModel, HistoryViewModel historyViewModel, ProfileViewModel profileViewModel, GameSessionService gameSessionService)
         {
             AuthViewModel = authViewModel;
             GameViewModel = gameViewModel;
             HistoryViewModel = historyViewModel;
             ProfileViewModel = profileViewModel;
+            _gameSessionService = gameSessionService;
 
             NavigateToGameCommand = new RelayCommand(() => CurrentView = GameViewModel);
             NavigateToHistoryCommand = new RelayCommand(() => CurrentView = HistoryViewModel);
@@ -75,10 +77,9 @@ namespace SmartChess.ViewModels
             HistoryViewModel.SetCurrentUser(user); // Устанавливаем текущего пользователя для HistoryViewModel
             
             // Start a new game for the logged-in user
-            var gameSessionService = (Application.Current as App)?._host?.Services.GetService<GameSessionService>();
-            if (gameSessionService != null)
+            if (_gameSessionService != null)
             {
-                _ = Task.Run(async () => await gameSessionService.StartNewGameAsync(user));
+                _ = Task.Run(async () => await _gameSessionService.StartNewGameAsync(user));
             }
             
             CurrentView = GameViewModel; // Переход к экрану игры
